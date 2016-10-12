@@ -19,7 +19,7 @@ project(ceres_solver)
 include(ExternalProject)
 set(TAG 6a13e39e8171f450fbb89188d97f198def81937e) # Version 1.11
 ExternalProject_Add(ceres_src
-  GIT_REPOSITORY https://ceres-solver.googlesource.com/ceres-solver
+  GIT_REPOSITORY /scratch/personal/Dropbox/git/ceres-solver.git
   GIT_TAG ${TAG}
   CMAKE_ARGS
       -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
