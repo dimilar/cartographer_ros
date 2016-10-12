@@ -164,7 +164,7 @@ class Node {
 
   ::ros::Publisher occupancy_grid_publisher_;
   std::thread occupancy_grid_thread_;
-  bool terminating_ = false GUARDED_BY(mutex_);
+  bool terminating_ GUARDED_BY(mutex_) = false;
 
   // Time at which we last logged the rates of incoming sensor data.
   std::chrono::steady_clock::time_point last_sensor_data_rates_logging_time_;

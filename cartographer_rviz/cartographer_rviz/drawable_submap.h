@@ -89,14 +89,14 @@ class DrawableSubmap : public QObject {
   Ogre::ManualObject* manual_object_;
   Ogre::TexturePtr texture_;
   Ogre::MaterialPtr material_;
-  double submap_z_ = 0. GUARDED_BY(mutex_);
+  double submap_z_ GUARDED_BY(mutex_) = 0.;
   Ogre::Vector3 position_ GUARDED_BY(mutex_);
   Ogre::Quaternion orientation_ GUARDED_BY(mutex_);
   Eigen::Affine3d slice_pose_ GUARDED_BY(mutex_);
   std::chrono::milliseconds last_query_timestamp_ GUARDED_BY(mutex_);
-  bool query_in_progress_ = false GUARDED_BY(mutex_);
-  int metadata_version_ = -1 GUARDED_BY(mutex_);
-  int texture_version_ = -1 GUARDED_BY(mutex_);
+  bool query_in_progress_  GUARDED_BY(mutex_) = false;
+  int metadata_version_ GUARDED_BY(mutex_) = -1;
+  int texture_version_ GUARDED_BY(mutex_) = -1;
   std::future<void> rpc_request_future_;
   ::cartographer_ros_msgs::SubmapQuery::Response response_ GUARDED_BY(mutex_);
   float current_alpha_ = 0.f;

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <vector>
 #include "cartographer_ros/time_conversion.h"
 
 #include "cartographer/common/time.h"
