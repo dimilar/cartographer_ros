@@ -64,9 +64,13 @@ add_library(cartographer_rviz_submaps_visualization ${DUMMY_SOURCE})
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   target_link_libraries(cartographer_rviz_submaps_visualization
     ${QT_LIBRARIES}
-    "-Wl,-force_load"
-    ${ALL_LIBRARIES}
     )
+  foreach(EXTRA_LIB ${ALL_LIBRARIES})
+    target_link_libraries(cartographer_rviz_submaps_visualization
+      "-Wl,-force_load" 
+      ${EXTRA_LIB}
+      )
+  endforeach()
 else ()
   target_link_libraries(cartographer_rviz_submaps_visualization
     ${QT_LIBRARIES}
