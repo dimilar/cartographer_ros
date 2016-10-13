@@ -33,6 +33,9 @@ include("${CARTOGRAPHER_CMAKE_DIR}/functions.cmake")
 google_initialize_cartographer_project()
 google_enable_testing()
 
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  set(CATKIN_ENABLE_TESTING OFF)
+endif ()
 find_package(catkin REQUIRED COMPONENTS ${PACKAGE_DEPENDENCIES})
 
 catkin_package(

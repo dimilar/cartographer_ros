@@ -60,12 +60,21 @@ add_custom_command(
   DEPENDS ${ARG_SRCS}
 )
 add_library(cartographer_rviz_submaps_visualization ${DUMMY_SOURCE})
-target_link_libraries(cartographer_rviz_submaps_visualization
-  ${QT_LIBRARIES}
-  "-Wl,--whole-archive"
-  ${ALL_LIBRARIES}
-  "-Wl,--no-whole-archive"
-)
+
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  target_link_libraries(cartographer_rviz_submaps_visualization
+    ${QT_LIBRARIES}
+    "-Wl,-force_load"
+    ${ALL_LIBRARIES}
+    )
+else ()
+  target_link_libraries(cartographer_rviz_submaps_visualization
+    ${QT_LIBRARIES}
+    "-Wl,--whole-archive"
+    ${ALL_LIBRARIES}
+    "-Wl,--no-whole-archive"
+    )
+endif ()
 
 install(TARGETS cartographer_rviz_submaps_visualization
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
