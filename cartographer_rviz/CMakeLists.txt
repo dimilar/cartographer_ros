@@ -62,6 +62,7 @@ add_custom_command(
 add_library(cartographer_rviz_submaps_visualization ${DUMMY_SOURCE})
 
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  _macOS_homebrew_flags()
   target_link_libraries(cartographer_rviz_submaps_visualization
     ${QT_LIBRARIES}
     )
@@ -70,6 +71,9 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
       "-Wl,-force_load" 
       ${EXTRA_LIB}
       )
+  set_target_properties(cartographer_rviz_submaps_visualization PROPERTIES
+    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS}
+    LINK_FLAGS ${TARGET_LINK_FLAGS})
   endforeach()
 else ()
   target_link_libraries(cartographer_rviz_submaps_visualization
