@@ -110,6 +110,7 @@ google_binary(cartographer_node
   USES_GFLAGS
   USES_GLOG
   USES_ROS
+  USES_CAIRO
   SRCS
     node_main.cc
   DEPENDS
