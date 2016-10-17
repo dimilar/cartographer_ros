@@ -16,21 +16,25 @@
                              (setq clang-args '("-std=c++11" "-stdlib=libc++" "-DBOOST_NO_EXCEPTIONS" "-DQT_CORE_LIB" "-DQT_GUI_LIB" "-DQT_NO_DEBUG" "-DQT_NO_KEYWORDS" "-DROSCONSOLE_BACKEND_LOG4CXX" "-DROS_PACKAGE_NAME=\"cartographer_rviz\"" "-Dcartographer_rviz_submaps_visualization_EXPORTS" "-isysroot" "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" "-iframework" "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/System/Library/Frameworks" "-isystem" "/usr/local/Cellar/qt/4.8.7_2/include" "-iframework" "/usr/local/Cellar/qt/4.8.7_2/lib" "-isystem" "/usr/local/Cellar/qt/4.8.7_2/include/QtGui" "-isystem" "/usr/local/Cellar/qt/4.8.7_2/lib/QtCore.framework/Headers")))
                             ((eq system-type 'gnu/linux)
                              (setq include-dirs
-                                   `(,(concat project-dir "include")
-                                     ,(concat project-dir "build/src")
+                                   `(,(concat project-dir "")
+                                     ,(concat project-dir "../../../build_isolated/cartographer_ros/")
                                      "/usr/include"
+                                     "/usr/include/lua5.2"                                     
+                                     "/usr/include/eigen3"
+                                     "/usr/include/pcl-1.7"
                                      "/usr/local/include"
+                                     "/usr/include/OGRE"
+                                     "/usr/include/qt4"
+                                     "/usr/include/QtCore"
+                                     "/usr/include/QtGui"
                                      "/usr/include/x86_64-linux-gnu"
-                                     "/scratch/progs/llvm/lib/clang/3.8.0/include"
-                                     "/usr/include/c++/4.9"                                     
+                                     "/scratch/progs/llvm/lib/clang/3.9.0/include"
+                                     "/usr/include/c++/4.9"
                                      "/usr/include/x86_64-linux-gnu/c++/4.9"
-                                     "/usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed"
-                                     "/usr/include/hdf5/serial"
-                                     "/usr/local/cuda/include"
-                                     "/opt/intel/mkl/include"))
-                             (setq clang-args '("-std=c++11" "-stdlib=libc++" "-DQT_CORE_LIB" "-DQT_GUI_LIB" "-DQT_NO_DEBUG" "-DQT_NO_KEYWORDS" "-DROSCONSOLE_BACKEND_LOG4CXX" "-DROS_PACKAGE_NAME=\"cartographer_rviz\"" "-Dcartographer_rviz_submaps_visualization_EXPORTS"))))
+                                     "/usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed"))
+                             (setq clang-args '("-std=c++11" "-DBOOST_NO_EXCEPTIONS" "-DQT_CORE_LIB" "-DQT_GUI_LIB" "-DQT_NO_DEBUG" "-DQT_NO_KEYWORDS" "-DROSCONSOLE_BACKEND_LOG4CXX" "-DROS_PACKAGE_NAME=\"cartographer_rviz\"" "-Dcartographer_rviz_submaps_visualization_EXPORTS"))))
                       (setq flycheck-clang-include-path include-dirs)
-                      (setq flycheck-clang-warnings '("all" "extra" "no-sign-compare"))
+                      (setq flycheck-clang-warnings '("all" "extra" "no-sign-compare" "no-deprecated" "no-unused-parameter" "no-return-type"))
                       (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
                       (setq ac-clang-flags (append (append clang-args (mapcar (lambda (x) (concat "-I" x)) include-dirs)) '("-target-cpu" "core-avx2")))
                       (setq c-eldoc-includes (concat (mapconcat #'identity clang-args " ")
