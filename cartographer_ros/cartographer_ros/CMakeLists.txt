@@ -1,3 +1,11 @@
+google_library(assets_writer
+  USES_CARTOGRAPHER
+  SRCS
+    assets_writer.cc
+  HDRS
+    assets_writer.h
+)
+
 google_library(map_writer
   USES_GLOG
   USES_ROS
@@ -87,14 +95,6 @@ google_library(time_conversion
     time_conversion.h
 )
 
-google_library(xray
-  USES_CARTOGRAPHER
-  SRCS
-    xray.cc
-  HDRS
-    xray.h
-)
-
 google_catkin_test(time_conversion_test
   USES_CARTOGRAPHER
   USES_ROS
@@ -114,6 +114,7 @@ google_binary(cartographer_node
   SRCS
     node_main.cc
   DEPENDS
+    assets_writer
     map_writer
     msg_conversion
     node_options
@@ -122,7 +123,6 @@ google_binary(cartographer_node
     sensor_bridge
     tf_bridge
     time_conversion
-    xray
 )
 
 install(TARGETS cartographer_node
