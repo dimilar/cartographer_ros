@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright 2016 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO(hrapp): Replace through the one of ceres
+set -o errexit
+set -o verbose
 
-find_program(SPHINX_EXECUTABLE
-             NAMES sphinx-build
-             PATHS
-               /usr/bin
-             DOC "Sphinx")
+. /opt/ros/${ROS_DISTRO}/setup.sh
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Sphinx DEFAULT_MSG SPHINX_EXECUTABLE)
+# Create a new workspace in 'catkin_ws'.
+mkdir catkin_ws
+cd catkin_ws
+wstool init src
+
+# Merge the cartographer_ros.rosinstall file and fetch code for dependencies.
+wstool merge -t src ../cartographer_ros/cartographer_ros.rosinstall
+wstool update -t src
