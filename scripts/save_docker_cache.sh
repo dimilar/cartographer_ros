@@ -14,19 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Cache intermediate Docker layers. For a description of how this works, see:
+# https://giorgos.sealabs.net/docker-cache-on-travis-and-docker-112.html
+
 set -o errexit
 set -o verbose
+set -o pipefail
 
-. /opt/ros/${ROS_DISTRO}/setup.sh
-
-cd catkin_ws
-
-# Build, install, and test.
-#
-# It's necessary to use the '--install' flag for every call to
-# 'catkin_make_isolated' in order to avoid the use of 'devel_isolated' as the
-# 'CMAKE_INSTALL_PREFIX' for non-test targets. This in itself is important to
-# avoid any issues caused by using 'CMAKE_INSTALL_PREFIX' during the
-# configuration phase of the build (e.g. cartographer/common/config.h.cmake).
-export BUILD_FLAGS="--use-ninja --install-space /opt/cartographer_ros --install"
-catkin_make_isolated ${BUILD_FLAGS} $@
+if [[ ${TRAVIS_BRANCH} == "master" ]] &&
+    [[ ${TRAVIS_PULL_REQUEST} == "false" ]]; then
+  mkdir -p $(dirname ${DOCKER_CACHE_FILE});
+  docker save $(docker history -q cartographer_ros |
+      grep -v '<missing>') | gzip > ${DOCKER_CACHE_FILE};
+fi
