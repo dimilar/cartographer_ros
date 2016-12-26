@@ -32,44 +32,38 @@
 
 namespace cartographer_ros {
 
-struct SensorBridgeOptions {
-  double constant_odometry_translational_variance;
-  double constant_odometry_rotational_variance;
-};
-
-SensorBridgeOptions CreateSensorBridgeOptions(
-    ::cartographer::common::LuaParameterDictionary* lua_parameter_dictionary);
-
 // Converts ROS messages into SensorData in tracking frame for the MapBuilder.
 class SensorBridge {
  public:
   explicit SensorBridge(
-      const SensorBridgeOptions& options, const TfBridge* tf_bridge,
+      const string& tracking_frame, double lookup_transform_timeout_sec,
+      tf2_ros::Buffer* tf_buffer,
       ::cartographer::mapping::TrajectoryBuilder* trajectory_builder);
 
   SensorBridge(const SensorBridge&) = delete;
   SensorBridge& operator=(const SensorBridge&) = delete;
 
-  void HandleOdometryMessage(const string& topic,
+  void HandleOdometryMessage(const string& sensor_id,
                              const nav_msgs::Odometry::ConstPtr& msg);
-  void HandleImuMessage(const string& topic,
+  void HandleImuMessage(const string& sensor_id,
                         const sensor_msgs::Imu::ConstPtr& msg);
-  void HandleLaserScanMessage(const string& topic,
+  void HandleLaserScanMessage(const string& sensor_id,
                               const sensor_msgs::LaserScan::ConstPtr& msg);
   void HandleMultiEchoLaserScanMessage(
-      const string& topic,
+      const string& sensor_id,
       const sensor_msgs::MultiEchoLaserScan::ConstPtr& msg);
-  void HandlePointCloud2Message(const string& topic,
+  void HandlePointCloud2Message(const string& sensor_id,
                                 const sensor_msgs::PointCloud2::ConstPtr& msg);
 
- private:
-  void HandleLaserScanProto(
-      const string& topic, const ::cartographer::common::Time time,
-      const string& frame_id,
-      const ::cartographer::sensor::proto::LaserScan& laser_scan);
+  const TfBridge& tf_bridge() const;
 
-  const SensorBridgeOptions options_;
-  const TfBridge* const tf_bridge_;
+ private:
+  void HandleRangefinder(const string& sensor_id,
+                         const ::cartographer::common::Time time,
+                         const string& frame_id,
+                         const ::cartographer::sensor::PointCloud& ranges);
+
+  const TfBridge tf_bridge_;
   ::cartographer::mapping::TrajectoryBuilder* const trajectory_builder_;
 };
 

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright 2016 The Cartographer Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 2.8.7)
+set -o errexit
+set -o verbose
 
-project(ceres_solver)
+. /opt/ros/${ROS_DISTRO}/setup.sh
 
-include(ExternalProject)
-set(TAG 6a13e39e8171f450fbb89188d97f198def81937e) # Version 1.11
-ExternalProject_Add(ceres_src
-  GIT_REPOSITORY /scratch/personal/Dropbox/git/ceres-solver.git
-  GIT_TAG ${TAG}
-  CMAKE_ARGS
-      -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-      -DBUILD_EXAMPLES=OFF
-      -DBUILD_TESTING=OFF
-)
-
-# Ceres is installed via the ExternalProject_Add command above. However, we
-# must provide this no-op install target to satisfy Catkin.
-install(CODE "")
+cd catkin_ws
+catkin_test_results $@

@@ -38,7 +38,8 @@ See Cartographer's :ref:`system requirements <cartographer:system-requirements>`
 
 The following `ROS distributions`_ are currently supported:
 
-* ROS Indigo
+* Indigo
+* Kinetic
 
 .. _ROS distributions: http://wiki.ros.org/Distributions
 
@@ -91,10 +92,10 @@ the demo:
     roslaunch cartographer_ros demo_backpack_2d.launch bag_filename:=${HOME}/Downloads/cartographer_paper_deutsches_museum.bag
 
     # Download the 3D backpack example bag.
-    wget -P ~/Downloads https://storage.googleapis.com/cartographer-public-data/bags/backpack_3d/cartographer_3d_deutsches_museum.bag
+    wget -P ~/Downloads https://storage.googleapis.com/cartographer-public-data/bags/backpack_3d/b3-2016-04-05-14-14-00.bag
 
     # Launch the 3D backpack demo.
-    roslaunch cartographer_ros demo_backpack_3d.launch bag_filename:=${HOME}/Downloads/cartographer_3d_deutsches_museum.bag
+    roslaunch cartographer_ros demo_backpack_3d.launch bag_filename:=${HOME}/Downloads/b3-2016-04-05-14-14-00.bag
 
     # Download the Revo LDS example bag.
     wget -P ~/Downloads https://storage.googleapis.com/cartographer-public-data/bags/revo_lds/cartographer_paper_revo_lds.bag
@@ -107,5 +108,11 @@ the demo:
 
     # Launch the PR2 demo.
     roslaunch cartographer_ros demo_pr2.launch bag_filename:=${HOME}/Downloads/2011-09-15-08-32-46.bag
+
+    # Download the Taurob Tracker example bag.
+    wget -P ~/Downloads https://storage.googleapis.com/cartographer-public-data/bags/taurob_tracker/taurob_tracker_simulation.bag
+
+    # Launch the Taurob Tracker demo.
+    roslaunch cartographer_ros demo_taurob_tracker.launch bag_filename:=${HOME}/Downloads/taurob_tracker_simulation.bag
 
 The launch files will bring up ``roscore`` and ``rviz`` automatically.
