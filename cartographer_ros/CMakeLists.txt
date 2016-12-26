@@ -119,6 +119,8 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${Boost_INCLUDE_DIRS}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
 
+target_link_libraries(${PROJECT_NAME} PUBLIC "gflags")
+
 # Catkin
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
@@ -132,9 +134,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+_macOS_homebrew_flags()
 set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
 set_target_properties(${PROJECT_NAME} PROPERTIES
-  COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
+  COMPILE_FLAGS ${TARGET_COMPILE_FLAGS}
+  LINK_FLAGS "${TARGET_LINK_FLAGS}")
 
 if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(configuration_files_test "cartographer_ros/configuration_files_test.cc")

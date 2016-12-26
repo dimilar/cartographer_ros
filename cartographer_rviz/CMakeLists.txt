@@ -43,7 +43,6 @@ catkin_package(
 file(GLOB_RECURSE ALL_SRCS "*.cc" "*.h")
 set(CMAKE_AUTOMOC ON)
 add_library(${PROJECT_NAME} ${ALL_SRCS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${QT_LIBRARIES})
 
 if(rviz_QT_VERSION VERSION_LESS "5")
   message(STATUS "Using Qt4 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
@@ -59,6 +58,8 @@ else()
   include_directories(${Qt5_INCLUDE_DIRS})
 endif()
 add_definitions(-DQT_NO_KEYWORDS)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC ${QT_LIBRARIES})
 
 # Add the binary directory first, so that port.h is included after it has
 # been generated.
@@ -79,13 +80,18 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${Boost_INCLUDE_DIRS}")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
 
+target_link_libraries(${PROJECT_NAME} PUBLIC "gflags")
+
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
+
+_macOS_homebrew_flags()
 set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
 set_target_properties(${PROJECT_NAME} PROPERTIES
-  COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
+  COMPILE_FLAGS ${TARGET_COMPILE_FLAGS}
+  LINK_FLAGS "${TARGET_LINK_FLAGS}")
 
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
