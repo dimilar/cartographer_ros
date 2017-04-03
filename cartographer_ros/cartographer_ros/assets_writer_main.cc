@@ -23,10 +23,11 @@
 #include "cartographer/common/configuration_file_resolver.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
+#include "cartographer/io/file_writer.h"
 #include "cartographer/io/points_processor.h"
 #include "cartographer/io/points_processor_pipeline_builder.h"
-#include "cartographer/sensor/laser.h"
 #include "cartographer/sensor/point_cloud.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/transform_interpolation_buffer.h"
 #include "cartographer_ros/bag_reader.h"
 #include "cartographer_ros/msg_conversion.h"
@@ -50,14 +51,6 @@ DEFINE_string(configuration_directory, "",
 DEFINE_string(configuration_basename, "",
               "Basename, i.e. not containing any directory prefix, of the "
               "configuration file.");
-DEFINE_int32(laser_intensity_min, 0,
-             "Laser intensities are device specific. Some assets require a "
-             "useful normalized value for it though, which has to be specified "
-             "manually.");
-DEFINE_int32(laser_intensity_max, 255, "See 'laser_intensity_min'.");
-DEFINE_int32(fake_intensity, 0,
-             "If non-zero, ignore intensities in the laser scan and use this "
-             "value for all. Ignores 'laser_intensity_*'");
 DEFINE_string(
     urdf_filename, "",
     "URDF file that contains static links for your sensor configuration.");
@@ -65,6 +58,8 @@ DEFINE_string(bag_filename, "", "Bag to process.");
 DEFINE_string(
     trajectory_filename, "",
     "Proto containing the trajectory written by /finish_trajectory service.");
+DEFINE_bool(use_bag_transforms, true,
+            "Whether to read and use the transforms from the bag.");
 
 namespace cartographer_ros {
 namespace {
@@ -124,19 +119,9 @@ void HandleMessage(
       ToPointCloudWithIntensities(message);
   CHECK(point_cloud.intensities.size() == point_cloud.points.size());
 
-  for (int i = 0; i < point_cloud.points.size(); ++i) {
+  for (size_t i = 0; i < point_cloud.points.size(); ++i) {
     batch->points.push_back(sensor_to_map * point_cloud.points[i]);
-    uint8_t gray;
-    if (FLAGS_fake_intensity) {
-      gray = FLAGS_fake_intensity;
-    } else {
-      gray = cartographer::common::Clamp(
-                 (point_cloud.intensities[i] - FLAGS_laser_intensity_min) /
-                     (FLAGS_laser_intensity_max - FLAGS_laser_intensity_min),
-                 0.f, 1.f) *
-             255;
-    }
-    batch->colors.push_back({{gray, gray, gray}});
+    batch->intensities.push_back(point_cloud.intensities[i]);
   }
   pipeline.back()->Process(std::move(batch));
 }
@@ -156,18 +141,27 @@ void Run(const string& trajectory_filename, const string& bag_filename,
   carto::mapping::proto::Trajectory trajectory_proto;
   CHECK(trajectory_proto.ParseFromIstream(&stream));
 
+  const auto file_writer_factory = [](const string& filename) {
+    return carto::common::make_unique<carto::io::StreamFileWriter>(filename);
+  };
+
   carto::io::PointsProcessorPipelineBuilder builder;
-  carto::io::RegisterBuiltInPointsProcessors(trajectory_proto, &builder);
+  carto::io::RegisterBuiltInPointsProcessors(trajectory_proto,
+                                             file_writer_factory, &builder);
   std::vector<std::unique_ptr<carto::io::PointsProcessor>> pipeline =
       builder.CreatePipeline(
           lua_parameter_dictionary.GetDictionary("pipeline").get());
 
-  auto tf_buffer = ::cartographer::common::make_unique<tf2_ros::Buffer>();
+  auto tf_buffer =
+      ::cartographer::common::make_unique<tf2_ros::Buffer>(::ros::DURATION_MAX);
+
+  if (FLAGS_use_bag_transforms) {
+    LOG(INFO) << "Pre-loading transforms from bag...";
+    ReadTransformsFromBag(bag_filename, tf_buffer.get());
+  }
+
   if (!urdf_filename.empty()) {
     ReadStaticTransformsFromUrdf(urdf_filename, tf_buffer.get());
-  } else {
-    LOG(INFO) << "Pre-loading transforms from bag...";
-    tf_buffer = ReadTransformsFromBag(bag_filename);
   }
 
   const string tracking_frame =

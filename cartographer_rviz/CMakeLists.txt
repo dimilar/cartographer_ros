@@ -64,13 +64,12 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${QT_LIBRARIES})
 # Add the binary directory first, so that port.h is included after it has
 # been generated.
 target_include_directories(${PROJECT_NAME} PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CARTOGRAPHER_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${CARTOGRAPHER_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC cartographer)
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   "${EIGEN3_INCLUDE_DIR}")
