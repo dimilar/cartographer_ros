@@ -162,11 +162,11 @@ sensor_msgs::PointCloud2 ToPointCloud2Message(
 
 sensor_msgs::PointCloud2 ToPointCloud2Message(
     const int64 timestamp, const string& frame_id,
-    const ::cartographer::sensor::proto::LaserFan& laser_fan) {
-  CHECK(::cartographer::transform::ToEigen(laser_fan.origin()).norm() == 0)
-      << "Trying to convert a laser_fan that is not at the origin.";
+    const ::cartographer::sensor::proto::RangeData& range_data) {
+  CHECK(::cartographer::transform::ToEigen(range_data.origin()).norm() == 0)
+      << "Trying to convert a range_data that is not at the origin.";
 
-  const auto& point_cloud = laser_fan.point_cloud();
+  const auto& point_cloud = range_data.point_cloud();
   CHECK_EQ(point_cloud.x_size(), point_cloud.y_size());
   CHECK_EQ(point_cloud.x_size(), point_cloud.z_size());
   const auto num_points = point_cloud.x_size();
@@ -225,24 +225,6 @@ sensor_msgs::PointCloud2 ToPointCloud2Message(
     for (const auto& echo : intensity.echoes) {
       proto_echoes->Add(echo);
     }
-  }
-  return proto;
-}
-
-::cartographer::sensor::proto::LaserFan ToCartographer(
-    const pcl::PointCloud<pcl::PointXYZ>& pcl_points) {
-  ::cartographer::sensor::proto::LaserFan proto;
-
-  auto* origin = proto.mutable_origin();
-  origin->set_x(0.);
-  origin->set_y(0.);
-  origin->set_z(0.);
-
-  auto* point_cloud = proto.mutable_point_cloud();
-  for (const auto& point : pcl_points) {
-    point_cloud->add_x(point.x);
-    point_cloud->add_y(point.y);
-    point_cloud->add_z(point.z);
   }
   return proto;
 }

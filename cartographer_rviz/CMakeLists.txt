@@ -12,21 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)  # Ships with Ubuntu 14.04 (Trusty)
 
 project(cartographer_rviz)
 
 set(PACKAGE_DEPENDENCIES
   cartographer_ros_msgs
   eigen_conversions
+  message_runtime
   roscpp
+  roslib
   rviz
 )
 
-find_package(Cartographer REQUIRED)
+find_package(cartographer REQUIRED)
 include("${CARTOGRAPHER_CMAKE_DIR}/functions.cmake")
 google_initialize_cartographer_project()
 
+find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system iostreams)
 find_package(catkin REQUIRED COMPONENTS ${PACKAGE_DEPENDENCIES})
 
@@ -34,10 +37,13 @@ catkin_package(
   CATKIN_DEPENDS
     message_runtime
     ${PACKAGE_DEPENDENCIES}
-  INCLUDE_DIRS ${PROJECT_NAME}
+  INCLUDE_DIRS "."
 )
 
+file(GLOB_RECURSE ALL_SRCS "*.cc" "*.h")
 set(CMAKE_AUTOMOC ON)
+add_library(${PROJECT_NAME} ${ALL_SRCS})
+
 if(rviz_QT_VERSION VERSION_LESS "5")
   message(STATUS "Using Qt4 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
   find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui)
@@ -53,43 +59,40 @@ else()
 endif()
 add_definitions(-DQT_NO_KEYWORDS)
 
-SET(ALL_LIBRARIES "" CACHE INTERNAL "ALL_LIBRARIES")
+target_link_libraries(${PROJECT_NAME} PUBLIC ${QT_LIBRARIES})
 
-add_subdirectory("cartographer_rviz")
-
-# Create an empty file for the shared library we require for RViz.
-set(DUMMY_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/empty.cc)
-add_custom_command(
-  OUTPUT  ${DUMMY_SOURCE}
-  COMMAND cmake -E touch ${DUMMY_SOURCE}
-  DEPENDS ${ARG_SRCS}
+# Add the binary directory first, so that port.h is included after it has
+# been generated.
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>
 )
-add_library(cartographer_rviz_submaps_visualization ${DUMMY_SOURCE})
 
-if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  _macOS_homebrew_flags()
-  target_link_libraries(cartographer_rviz_submaps_visualization
-    ${QT_LIBRARIES}
-    )
-  foreach(EXTRA_LIB ${ALL_LIBRARIES})
-    target_link_libraries(cartographer_rviz_submaps_visualization
-      "-Wl,-force_load" 
-      ${EXTRA_LIB}
-      )
-  set_target_properties(cartographer_rviz_submaps_visualization PROPERTIES
-    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS}
-    LINK_FLAGS ${TARGET_LINK_FLAGS})
-  endforeach()
-else ()
-  target_link_libraries(cartographer_rviz_submaps_visualization
-    ${QT_LIBRARIES}
-    "-Wl,--whole-archive"
-    ${ALL_LIBRARIES}
-    "-Wl,--no-whole-archive"
-    )
-endif ()
+target_link_libraries(${PROJECT_NAME} PUBLIC cartographer)
 
-install(TARGETS cartographer_rviz_submaps_visualization
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+  "${EIGEN3_INCLUDE_DIR}")
+target_link_libraries(${PROJECT_NAME} PUBLIC ${EIGEN3_LIBRARIES})
+
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+  "${Boost_INCLUDE_DIRS}")
+target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
+
+target_link_libraries(${PROJECT_NAME} PUBLIC "gflags")
+
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+
+
+_macOS_homebrew_flags()
+set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  COMPILE_FLAGS ${TARGET_COMPILE_FLAGS}
+  LINK_FLAGS "${TARGET_LINK_FLAGS}")
+
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

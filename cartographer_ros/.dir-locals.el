@@ -13,7 +13,7 @@
                                      "/opt/ros/jade/include"
                                      "/scratch/personal/Dropbox/programming/cv/gtest/googlemock/include"
                                      "/usr/local/include"))
-                             (setq clang-args '("-std=c++11" "-stdlib=libc++" "-DBOOST_NO_EXCEPTIONS" "-DDISABLE_DAVIDSDK" "-DDISABLE_DSSDK" "-DDISABLE_ENSENSO" "-DDISABLE_LIBUSB_1_0" "-DDISABLE_OPENNI" "-DDISABLE_OPENNI2" "-DDISABLE_PCAP" "-DDISABLE_PNG" "-DROSCONSOLE_BACKEND_LOG4CXX" "-DROS_PACKAGE_NAME=\"cartographer_ros\"" "-isysroot" "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" "-iframework" "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/System/Library/Frameworks")))
+                             (setq clang-args '("-std=c++11" "-stdlib=libc++" "-DBOOST_NO_EXCEPTIONS" "-DDISABLE_DAVIDSDK" "-DDISABLE_DSSDK" "-DDISABLE_ENSENSO" "-DDISABLE_LIBUSB_1_0" "-DDISABLE_OPENNI" "-DDISABLE_OPENNI2" "-DDISABLE_PCAP" "-DDISABLE_PNG" "-DROSCONSOLE_BACKEND_LOG4CXX" "-DROS_PACKAGE_NAME=\"cartographer_ros\"" "-isysroot" "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" "-iframework" "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks")))
                             ((eq system-type 'gnu/linux)
                              (setq include-dirs
                                    `(,(concat project-dir "")

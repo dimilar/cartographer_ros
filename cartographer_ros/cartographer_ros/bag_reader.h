@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_ROS_GOOGLE_CARTOGRAPHER_SRC_TIME_CONVERSION_H_
-#define CARTOGRAPHER_ROS_GOOGLE_CARTOGRAPHER_SRC_TIME_CONVERSION_H_
+#ifndef CARTOGRAPHER_ROS_BAG_READER_H_
+#define CARTOGRAPHER_ROS_BAG_READER_H_
 
-#include "cartographer/common/time.h"
-#include "ros/ros.h"
+#include "cartographer/common/port.h"
+#include "tf2_ros/buffer.h"
 
 namespace cartographer_ros {
 
-::ros::Time ToRos(::cartographer::common::Time time);
-
-::cartographer::common::Time FromRos(const ::ros::Time& time);
+void ReadTransformsFromBag(const string& bag_filename,
+                           tf2_ros::Buffer* const tf_buffer);
 
 }  // namespace cartographer_ros
 
-#endif  // CARTOGRAPHER_ROS_GOOGLE_CARTOGRAPHER_SRC_TIME_CONVERSION_H_
+#endif  // CARTOGRAPHER_ROS_BAG_READER_H_

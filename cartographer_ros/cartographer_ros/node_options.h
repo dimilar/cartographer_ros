@@ -22,7 +22,6 @@
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/mapping/map_builder.h"
-
 #include "cartographer_ros/sensor_bridge.h"
 
 namespace cartographer_ros {
@@ -30,16 +29,15 @@ namespace cartographer_ros {
 // Top-level options of Cartographer's ROS integration.
 struct NodeOptions {
   ::cartographer::mapping::proto::MapBuilderOptions map_builder_options;
-  SensorBridgeOptions sensor_bridge_options;
   string map_frame;
   string tracking_frame;
   string published_frame;
   string odom_frame;
   bool provide_odom_frame;
-  bool use_odometry_data;
-  bool use_horizontal_laser;
-  bool use_horizontal_multi_echo_laser;
-  int num_lasers_3d;
+  bool use_odometry;
+  bool use_laser_scan;
+  bool use_multi_echo_laser_scan;
+  int num_point_clouds;
   double lookup_transform_timeout_sec;
   double submap_publish_period_sec;
   double pose_publish_period_sec;

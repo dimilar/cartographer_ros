@@ -37,55 +37,31 @@ const string& CheckNoLeadingSlash(const string& frame_id) {
 
 }  // namespace
 
-SensorBridgeOptions CreateSensorBridgeOptions(
-    carto::common::LuaParameterDictionary* const lua_parameter_dictionary) {
-  SensorBridgeOptions options;
-  options.constant_odometry_translational_variance =
-      lua_parameter_dictionary->GetDouble(
-          "constant_odometry_translational_variance");
-  options.constant_odometry_rotational_variance =
-      lua_parameter_dictionary->GetDouble(
-          "constant_odometry_rotational_variance");
-  return options;
-}
-
 SensorBridge::SensorBridge(
-    const SensorBridgeOptions& options, const TfBridge* const tf_bridge,
+    const string& tracking_frame, const double lookup_transform_timeout_sec,
+    tf2_ros::Buffer* const tf_buffer,
     carto::mapping::TrajectoryBuilder* const trajectory_builder)
-    : options_(options),
-      tf_bridge_(tf_bridge),
+    : tf_bridge_(tracking_frame, lookup_transform_timeout_sec, tf_buffer),
       trajectory_builder_(trajectory_builder) {}
 
 void SensorBridge::HandleOdometryMessage(
-    const string& topic, const nav_msgs::Odometry::ConstPtr& msg) {
+    const string& sensor_id, const nav_msgs::Odometry::ConstPtr& msg) {
   const carto::common::Time time = FromRos(msg->header.stamp);
-  const Eigen::Matrix3d translational =
-      Eigen::Matrix3d::Identity() *
-      options_.constant_odometry_translational_variance;
-  const Eigen::Matrix3d rotational =
-      Eigen::Matrix3d::Identity() *
-      options_.constant_odometry_rotational_variance;
-  // clang-format off
-  carto::kalman_filter::PoseCovariance covariance;
-  covariance <<
-      translational, Eigen::Matrix3d::Zero(),
-      Eigen::Matrix3d::Zero(), rotational;
-  // clang-format on
-  const auto sensor_to_tracking = tf_bridge_->LookupToTracking(
+  const auto sensor_to_tracking = tf_bridge_.LookupToTracking(
       time, CheckNoLeadingSlash(msg->child_frame_id));
   if (sensor_to_tracking != nullptr) {
-    trajectory_builder_->AddOdometerPose(
-        topic, time, ToRigid3d(msg->pose.pose) * sensor_to_tracking->inverse(),
-        covariance);
+    trajectory_builder_->AddOdometerData(
+        sensor_id, time,
+        ToRigid3d(msg->pose.pose) * sensor_to_tracking->inverse());
   }
 }
 
-void SensorBridge::HandleImuMessage(const string& topic,
+void SensorBridge::HandleImuMessage(const string& sensor_id,
                                     const sensor_msgs::Imu::ConstPtr& msg) {
   CHECK_NE(msg->linear_acceleration_covariance[0], -1);
   CHECK_NE(msg->angular_velocity_covariance[0], -1);
   const carto::common::Time time = FromRos(msg->header.stamp);
-  const auto sensor_to_tracking = tf_bridge_->LookupToTracking(
+  const auto sensor_to_tracking = tf_bridge_.LookupToTracking(
       time, CheckNoLeadingSlash(msg->header.frame_id));
   if (sensor_to_tracking != nullptr) {
     CHECK(sensor_to_tracking->translation().norm() < 1e-5)
@@ -93,54 +69,50 @@ void SensorBridge::HandleImuMessage(const string& topic,
            "Transforming linear acceleration into the tracking frame will "
            "otherwise be imprecise.";
     trajectory_builder_->AddImuData(
-        topic, time,
+        sensor_id, time,
         sensor_to_tracking->rotation() * ToEigen(msg->linear_acceleration),
         sensor_to_tracking->rotation() * ToEigen(msg->angular_velocity));
   }
 }
 
 void SensorBridge::HandleLaserScanMessage(
-    const string& topic, const sensor_msgs::LaserScan::ConstPtr& msg) {
-  HandleLaserScanProto(topic, FromRos(msg->header.stamp), msg->header.frame_id,
-                       ToCartographer(*msg));
+    const string& sensor_id, const sensor_msgs::LaserScan::ConstPtr& msg) {
+  HandleRangefinder(sensor_id, FromRos(msg->header.stamp), msg->header.frame_id,
+                    carto::sensor::ToPointCloud(ToCartographer(*msg)));
 }
 
 void SensorBridge::HandleMultiEchoLaserScanMessage(
-    const string& topic, const sensor_msgs::MultiEchoLaserScan::ConstPtr& msg) {
-  HandleLaserScanProto(topic, FromRos(msg->header.stamp), msg->header.frame_id,
-                       ToCartographer(*msg));
+    const string& sensor_id,
+    const sensor_msgs::MultiEchoLaserScan::ConstPtr& msg) {
+  HandleRangefinder(sensor_id, FromRos(msg->header.stamp), msg->header.frame_id,
+                    carto::sensor::ToPointCloud(ToCartographer(*msg)));
 }
 
 void SensorBridge::HandlePointCloud2Message(
-    const string& topic, const sensor_msgs::PointCloud2::ConstPtr& msg) {
+    const string& sensor_id, const sensor_msgs::PointCloud2::ConstPtr& msg) {
   pcl::PointCloud<pcl::PointXYZ> pcl_point_cloud;
   pcl::fromROSMsg(*msg, pcl_point_cloud);
-  const carto::common::Time time = FromRos(msg->header.stamp);
-  const auto sensor_to_tracking = tf_bridge_->LookupToTracking(
-      time, CheckNoLeadingSlash(msg->header.frame_id));
-  if (sensor_to_tracking != nullptr) {
-    trajectory_builder_->AddLaserFan(
-        topic, time,
-        carto::sensor::TransformLaserFan(
-            carto::sensor::FromProto(ToCartographer(pcl_point_cloud)),
-            sensor_to_tracking->cast<float>()));
+  carto::sensor::PointCloud point_cloud;
+  for (const auto& point : pcl_point_cloud) {
+    point_cloud.emplace_back(point.x, point.y, point.z);
   }
+  HandleRangefinder(sensor_id, FromRos(msg->header.stamp), msg->header.frame_id,
+                    point_cloud);
 }
 
-void SensorBridge::HandleLaserScanProto(
-    const string& topic, const carto::common::Time time, const string& frame_id,
-    const carto::sensor::proto::LaserScan& laser_scan) {
-  const carto::sensor::LaserFan laser_fan = {
-      Eigen::Vector3f::Zero(),
-      carto::sensor::ToPointCloud(laser_scan),
-      {},
-      {}};
+const TfBridge& SensorBridge::tf_bridge() const { return tf_bridge_; }
+
+void SensorBridge::HandleRangefinder(const string& sensor_id,
+                                     const carto::common::Time time,
+                                     const string& frame_id,
+                                     const carto::sensor::PointCloud& ranges) {
   const auto sensor_to_tracking =
-      tf_bridge_->LookupToTracking(time, CheckNoLeadingSlash(frame_id));
+      tf_bridge_.LookupToTracking(time, CheckNoLeadingSlash(frame_id));
   if (sensor_to_tracking != nullptr) {
-    trajectory_builder_->AddLaserFan(
-        topic, time, carto::sensor::TransformLaserFan(
-                         laser_fan, sensor_to_tracking->cast<float>()));
+    trajectory_builder_->AddRangefinderData(
+        sensor_id, time, sensor_to_tracking->translation().cast<float>(),
+        carto::sensor::TransformPointCloud(ranges,
+                                           sensor_to_tracking->cast<float>()));
   }
 }
 

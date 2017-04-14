@@ -14,13 +14,13 @@
   limitations under the License.
 -->
 
-<library path="lib/libcartographer_rviz">
-  <class name="Submaps"
-         type="cartographer_rviz::SubmapsDisplay"
-         base_class_type="rviz::Display">
-    <description>
-      Displays submaps as a unified map in RViz.
-      https://github.com/googlecartographer/cartographer_ros
-    </description>
-  </class>
-</library>
+<launch>
+  <param name="/use_sim_time" value="true" />
+
+  <include file="$(find cartographer_ros)/launch/taurob_tracker.launch" />
+
+  <node name="rviz" pkg="rviz" type="rviz" required="true"
+      args="-d $(find cartographer_ros)/configuration_files/demo_3d.rviz" />
+  <node name="playbag" pkg="rosbag" type="play"
+      args="--clock $(arg bag_filename)" />
+</launch>
